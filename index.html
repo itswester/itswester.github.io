@@ -563,8 +563,20 @@
       });
     });
 
-    // Инициализация VK One Tap (твой код)
-    function initVKOneTap(containerId = 'vk_id_login_container') {
+    // Флаг, чтобы рендерить авторизацию только один раз
+let isAuthRendered = false;
+
+// Инициализация VK One Tap (с очисткой контейнера)
+function initVKOneTap(containerId = 'vk_id_login_container') {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error('Контейнер не найден: ' + containerId);
+    return;
+  }
+
+  // Очищаем контейнер перед рендером (самое главное!)
+  container.innerHTML = '';
+
   if ('VKIDSDK' in window) {
     const VKID = window.VKIDSDK;
 
@@ -573,15 +585,15 @@
       redirectUrl: 'https://catbrawl.ru/auth.html',
       responseMode: VKID.ConfigResponseMode.Callback,
       source: VKID.ConfigSource.LOWCODE,
-      scope: ''
+      scope: 'phone email'
     });
 
     const oneTap = new VKID.OneTap();
 
     oneTap.render({
-      container: document.getElementById(containerId),
-      showAlternativeLogin: true,          // Показывать альтернативы
-      oauthList: ['ok_ru', 'mail_ru'],     // Добавляем OK.ru и Mail.ru
+      container: container,
+      showAlternativeLogin: true,
+      oauthList: ['ok_ru', 'mail_ru'],
       styles: {
         borderRadius: 20
       }
@@ -596,24 +608,47 @@
         .catch(vkidOnError);
     });
 
-    console.log('One Tap с VK + OK + Mail успешно отрендерен');
+    console.log('One Tap успешно отрендерен');
+    isAuthRendered = true;
   } else {
-    console.error('VKIDSDK не найден');
+    console.error('VKIDSDK не загружен');
   }
 }
 
+// Изменённая функция открытия модалки
+function openModal(id) {
+  document.getElementById(id).style.display = 'flex';
+  
+  if (id === 'auth-modal' && !isAuthRendered) {
+    // Рендерим только один раз
+    setTimeout(() => initVKOneTap('vk_id_login_container'), 300);
+  }
+}
+
+// Для теста на главной странице (если оставляешь тестовый блок)
+window.addEventListener('load', function() {
+  updateAuthStatus();
+  // Если хочешь тест на главной — раскомментируй:
+  // initVKOneTap('test_vk_container');
+});
+
     function vkidOnSuccess(data) {
-      console.log('Успешный вход:', data);
-      alert('Вы успешно вошли через ВКонтакте!');
+  console.log('Полный ответ от VK ID:', data); // ← посмотри в консоли, что приходит
 
-      localStorage.setItem('vkUser', JSON.stringify({
-        first_name: data.user?.first_name || 'Пользователь',
-        id: data.user?.id || 'vk_user'
-      }));
+  const user = data.user || {}; // на всякий случай
+  const firstName = user.first_name || user.name || user.username || 'Пользователь';
 
-      updateAuthStatus();
-      closeModal('auth-modal');
-    }
+  console.log('Извлечённое имя:', firstName);
+
+  localStorage.setItem('vkUser', JSON.stringify({
+    first_name: firstName,
+    id: user.id || data.user_id || 'vk_user'
+  }));
+
+  updateAuthStatus();
+  closeModal('auth-modal');
+  alert('Вы вошли! Привет, ' + firstName + '!');
+}
 
     function vkidOnError(error) {
       console.error('Ошибка VK One Tap:', error);
