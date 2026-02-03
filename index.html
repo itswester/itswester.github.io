@@ -632,7 +632,8 @@ window.addEventListener('load', function() {
   // initVKOneTap('test_vk_container');
 });
 
-    function vkidOnSuccess(data) {
+    // Сначала определяем обработчики (важно, чтобы они были ДО initVKOneTap)
+function vkidOnSuccess(data) {
   console.log('Полный ответ от VK ID:', data);
 
   const accessToken = data.access_token;
@@ -643,15 +644,15 @@ window.addEventListener('load', function() {
     return;
   }
 
-  // Запрашиваем имя/фамилию через VK API users.get
+  // Запрашиваем имя, фамилию и фото через VK API
   fetch(`https://api.vk.com/method/users.get?user_ids=${userId}&fields=first_name,last_name,photo_100&access_token=${accessToken}&v=5.199`)
     .then(response => response.json())
     .then(apiResponse => {
       console.log('Ответ от users.get:', apiResponse);
 
       const user = apiResponse.response?.[0];
-      if (user) {
-        const firstName = user.first_name || 'Пользователь';
+      if (user && user.first_name) {
+        const firstName = user.first_name;
         const lastName = user.last_name || '';
         const fullName = `${firstName} ${lastName}`.trim();
 
@@ -667,7 +668,7 @@ window.addEventListener('load', function() {
         closeModal('auth-modal');
         alert(`Вы вошли! Привет, ${fullName}!`);
       } else {
-        // Если users.get не вернул данные — fallback
+        // Если имя не пришло — показываем хотя бы "Пользователь"
         localStorage.setItem('vkUser', JSON.stringify({
           first_name: 'Пользователь',
           id: userId
@@ -678,8 +679,61 @@ window.addEventListener('load', function() {
     })
     .catch(err => {
       console.error('Ошибка запроса users.get:', err);
-      alert('Ошибка получения имени: ' + err.message);
+      alert('Ошибка получения профиля: ' + err.message);
     });
+}
+
+function vkidOnError(error) {
+  console.error('Ошибка VK One Tap:', error);
+  alert('Ошибка авторизации: ' + (error.message || 'Попробуйте позже'));
+}
+
+// Теперь функция инициализации (использует уже существующие обработчики)
+function initVKOneTap(containerId = 'vk_id_login_container') {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error('Контейнер не найден: ' + containerId);
+    return;
+  }
+
+  // Очищаем контейнер, чтобы кнопки не дублировались при повторном открытии
+  container.innerHTML = '';
+
+  if ('VKIDSDK' in window) {
+    const VKID = window.VKIDSDK;
+
+    VKID.Config.init({
+      app: 54439662,
+      redirectUrl: 'https://catbrawl.ru/auth.html',
+      responseMode: VKID.ConfigResponseMode.Callback,
+      source: VKID.ConfigSource.LOWCODE,
+      scope: 'vkid.personal_info'  // Для получения профиля
+    });
+
+    const oneTap = new VKID.OneTap();
+
+    oneTap.render({
+      container: container,
+      showAlternativeLogin: true,
+      oauthList: ['ok_ru', 'mail_ru'],
+      styles: {
+        borderRadius: 20
+      }
+    })
+    .on(VKID.WidgetEvents.ERROR, vkidOnError)
+    .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+      const code = payload.code;
+      const deviceId = payload.device_id;
+
+      VKID.Auth.exchangeCode(code, deviceId)
+        .then(vkidOnSuccess)
+        .catch(vkidOnError);
+    });
+
+    console.log('One Tap успешно отрендерен в ' + containerId);
+  } else {
+    console.error('VKIDSDK не загружен');
+  }
 }
 
     // Функция обновления шапки (приветствие или кнопка Войти)
