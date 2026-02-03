@@ -633,27 +633,54 @@ window.addEventListener('load', function() {
 });
 
     function vkidOnSuccess(data) {
-  console.log('Полный ответ от VK ID:', data); // ← посмотри в консоли, что приходит
+  console.log('Полный ответ от VK ID:', data);
 
-  const user = data.user || {}; // на всякий случай
-  const firstName = user.first_name || user.name || user.username || 'Пользователь';
+  const accessToken = data.access_token;
+  const userId = data.user_id;
 
-  console.log('Извлечённое имя:', firstName);
+  if (!accessToken || !userId) {
+    alert('Ошибка: не получен токен или ID пользователя');
+    return;
+  }
 
-  localStorage.setItem('vkUser', JSON.stringify({
-    first_name: firstName,
-    id: user.id || data.user_id || 'vk_user'
-  }));
+  // Запрашиваем имя/фамилию через VK API users.get
+  fetch(`https://api.vk.com/method/users.get?user_ids=${userId}&fields=first_name,last_name,photo_100&access_token=${accessToken}&v=5.199`)
+    .then(response => response.json())
+    .then(apiResponse => {
+      console.log('Ответ от users.get:', apiResponse);
 
-  updateAuthStatus();
-  closeModal('auth-modal');
-  alert('Вы вошли! Привет, ' + firstName + '!');
+      const user = apiResponse.response?.[0];
+      if (user) {
+        const firstName = user.first_name || 'Пользователь';
+        const lastName = user.last_name || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        localStorage.setItem('vkUser', JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          full_name: fullName,
+          id: userId,
+          photo: user.photo_100 || ''
+        }));
+
+        updateAuthStatus();
+        closeModal('auth-modal');
+        alert(`Вы вошли! Привет, ${fullName}!`);
+      } else {
+        // Если users.get не вернул данные — fallback
+        localStorage.setItem('vkUser', JSON.stringify({
+          first_name: 'Пользователь',
+          id: userId
+        }));
+        updateAuthStatus();
+        alert('Вход успешен, но имя не получено');
+      }
+    })
+    .catch(err => {
+      console.error('Ошибка запроса users.get:', err);
+      alert('Ошибка получения имени: ' + err.message);
+    });
 }
-
-    function vkidOnError(error) {
-      console.error('Ошибка VK One Tap:', error);
-      alert('Ошибка авторизации: ' + (error.message || 'Попробуйте позже'));
-    }
 
     // Функция обновления шапки (приветствие или кнопка Войти)
     function updateAuthStatus() {
