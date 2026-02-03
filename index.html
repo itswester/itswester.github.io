@@ -564,40 +564,43 @@
     });
 
     // Инициализация VK One Tap (твой код)
-    function initVKOneTap() {
-      if ('VKIDSDK' in window) {
-        const VKID = window.VKIDSDK;
+    function initVKOneTap(containerId = 'vk_id_login_container') {
+  if ('VKIDSDK' in window) {
+    const VKID = window.VKIDSDK;
 
-        VKID.Config.init({
-          app: 54439662,
-          redirectUrl: 'https://catbrawl.ru/auth.html',
-          responseMode: VKID.ConfigResponseMode.Callback,
-          source: VKID.ConfigSource.LOWCODE,
-          scope: ''
-        });
+    VKID.Config.init({
+      app: 54439662,
+      redirectUrl: 'https://catbrawl.ru/auth.html',
+      responseMode: VKID.ConfigResponseMode.Callback,
+      source: VKID.ConfigSource.LOWCODE,
+      scope: ''
+    });
 
-        const oneTap = new VKID.OneTap();
+    const oneTap = new VKID.OneTap();
 
-        oneTap.render({
-          container: document.getElementById('vk_id_login_container'),
-          showAlternativeLogin: true,
-          styles: {
-            borderRadius: 20
-          }
-        })
-        .on(VKID.WidgetEvents.ERROR, vkidOnError)
-        .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
-          const code = payload.code;
-          const deviceId = payload.device_id;
-
-          VKID.Auth.exchangeCode(code, deviceId)
-            .then(vkidOnSuccess)
-            .catch(vkidOnError);
-        });
-      } else {
-        console.error('VKIDSDK не загружен');
+    oneTap.render({
+      container: document.getElementById(containerId),
+      showAlternativeLogin: true,          // Показывать альтернативы
+      oauthList: ['ok_ru', 'mail_ru'],     // Добавляем OK.ru и Mail.ru
+      styles: {
+        borderRadius: 20
       }
-    }
+    })
+    .on(VKID.WidgetEvents.ERROR, vkidOnError)
+    .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+      const code = payload.code;
+      const deviceId = payload.device_id;
+
+      VKID.Auth.exchangeCode(code, deviceId)
+        .then(vkidOnSuccess)
+        .catch(vkidOnError);
+    });
+
+    console.log('One Tap с VK + OK + Mail успешно отрендерен');
+  } else {
+    console.error('VKIDSDK не найден');
+  }
+}
 
     function vkidOnSuccess(data) {
       console.log('Успешный вход:', data);
