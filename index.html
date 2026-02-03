@@ -522,7 +522,7 @@
         choose_language: "Выберите язык",
         footer_disclaimer: "Данный контент не связан с компанией Supercell, не поддерживается, не спонсируется и не был утвержден ею, и компания Supercell не несет за него ответственность. Для получения большей информации смотрите: <a href=\"https://supercell.com/en/fan-content-policy/\" target=\"_blank\">Supercell's Fan Content Policy</a>."
       }
-      // Добавь остальные языки по необходимости
+      // Добавь остальные языки по желанию
     };
 
     function changeLanguage(lang) {
@@ -543,7 +543,6 @@
     // Модальные окна
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
-      // Если открываем авторизацию — инициализируем VK One Tap
       if (id === 'auth-modal') {
         initVKOneTap();
       }
@@ -559,10 +558,10 @@
       });
     });
 
-    // Инициализация VK One Tap
+    // Инициализация VK One Tap (твой код)
     function initVKOneTap() {
-      if (typeof VKIDSDK !== 'undefined') {
-        const VKID = VKIDSDK;
+      if ('VKIDSDK' in window) {
+        const VKID = window.VKIDSDK;
 
         VKID.Config.init({
           app: 54439662,
@@ -590,15 +589,16 @@
             .then(vkidOnSuccess)
             .catch(vkidOnError);
         });
+      } else {
+        console.error('VKIDSDK не загружен');
       }
     }
 
     function vkidOnSuccess(data) {
-      // Здесь получаем данные пользователя после успешного обмена кода
-      console.log('Успешный вход:', data);
+      console.log('Успешный вход VK One Tap:', data);
       alert('Вы успешно вошли через ВКонтакте!');
 
-      // Сохраняем данные (можно расширить)
+      // Сохраняем данные пользователя (можно расширить)
       localStorage.setItem('vkUser', JSON.stringify({
         first_name: data.user?.first_name || 'Пользователь',
         id: data.user?.id || 'vk_user'
@@ -613,7 +613,7 @@
       alert('Ошибка авторизации: ' + (error.message || 'Попробуйте позже'));
     }
 
-    // Статус авторизации (показывает кнопку "Войти" или приветствие)
+    // Статус авторизации (кнопка "Войти" или приветствие)
     function updateAuthStatus() {
       const user = JSON.parse(localStorage.getItem('vkUser'));
       const container = document.getElementById('auth-status');
@@ -688,7 +688,7 @@
     }
   </script>
 
-  <!-- VK One Tap SDK (обязательно в конце) -->
+  <!-- VK One Tap SDK -->
   <script src="https://unpkg.com/@vkid/sdk@3.0.0/dist-sdk/umd/index.js"></script>
 </body>
 </html>
