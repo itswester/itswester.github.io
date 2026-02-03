@@ -645,9 +645,9 @@ function vkidOnSuccess(data) {
   }
 
   // Запрашиваем имя, фамилию и фото через VK API
-  fetch(`https://api.vk.com/method/users.get?user_ids=${userId}&fields=first_name,last_name,photo_100&access_token=${accessToken}&v=5.199`)
-    .then(response => response.json())
-    .then(apiResponse => {
+  fetch(`https://catbrawl.ru/get_vk_user.php?access_token=${accessToken}&user_id=${userId}`)
+  .then(response => response.json())
+  .then(apiResponse => {      
       console.log('Ответ от users.get:', apiResponse);
 
       const user = apiResponse.response?.[0];
