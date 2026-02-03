@@ -437,6 +437,12 @@
         </div>
       </div>
     </div>
+
+    <!-- ТЕСТОВЫЙ КОНТЕЙНЕР VK One Tap НА ГЛАВНОЙ СТРАНИЦЕ -->
+    <div style="text-align:center; margin:40px 0; padding:20px; background:#f0f0f0; border-radius:12px;">
+      <h3>Тест VK One Tap (должен появиться ниже)</h3>
+      <div id="test_vk_container" style="margin:20px auto; max-width:360px;"></div>
+    </div>
   </main>
 
   <footer>
@@ -470,7 +476,6 @@
       <h2>Войти через ВКонтакте</h2>
 
       <div style="text-align:center; margin:32px 0;">
-        <!-- Контейнер для One Tap кнопки -->
         <div id="vk_id_login_container"></div>
       </div>
 
@@ -522,7 +527,6 @@
         choose_language: "Выберите язык",
         footer_disclaimer: "Данный контент не связан с компанией Supercell, не поддерживается, не спонсируется и не был утвержден ею, и компания Supercell не несет за него ответственность. Для получения большей информации смотрите: <a href=\"https://supercell.com/en/fan-content-policy/\" target=\"_blank\">Supercell's Fan Content Policy</a>."
       }
-      // Добавь остальные языки по желанию
     };
 
     function changeLanguage(lang) {
@@ -544,7 +548,7 @@
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
       if (id === 'auth-modal') {
-        initVKOneTap();
+        setTimeout(initVKOneTap, 100); // Задержка 100 мс, чтобы модалка отобразилась
       }
     }
 
@@ -558,7 +562,7 @@
       });
     });
 
-    // Инициализация VK One Tap (твой код)
+    // Инициализация VK One Tap для модалки
     function initVKOneTap() {
       if ('VKIDSDK' in window) {
         const VKID = window.VKIDSDK;
@@ -589,8 +593,46 @@
             .then(vkidOnSuccess)
             .catch(vkidOnError);
         });
+        console.log('One Tap рендер в модалке выполнен');
       } else {
-        console.error('VKIDSDK не загружен');
+        console.error('VKIDSDK не найден для модалки');
+      }
+    }
+
+    // ТЕСТОВАЯ инициализация VK One Tap на главной странице
+    function initVKOneTapTest() {
+      if ('VKIDSDK' in window) {
+        const VKID = window.VKIDSDK;
+
+        VKID.Config.init({
+          app: 54439662,
+          redirectUrl: 'https://catbrawl.ru/auth.html',
+          responseMode: VKID.ConfigResponseMode.Callback,
+          source: VKID.ConfigSource.LOWCODE,
+          scope: ''
+        });
+
+        const oneTapTest = new VKID.OneTap();
+
+        oneTapTest.render({
+          container: document.getElementById('test_vk_container'),
+          showAlternativeLogin: true,
+          styles: {
+            borderRadius: 20
+          }
+        })
+        .on(VKID.WidgetEvents.ERROR, vkidOnError)
+        .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+          const code = payload.code;
+          const deviceId = payload.device_id;
+
+          VKID.Auth.exchangeCode(code, deviceId)
+            .then(vkidOnSuccess)
+            .catch(vkidOnError);
+        });
+        console.log('Тестовый One Tap на главной странице рендер выполнен');
+      } else {
+        console.error('VKIDSDK не найден для теста на главной');
       }
     }
 
@@ -598,7 +640,6 @@
       console.log('Успешный вход VK One Tap:', data);
       alert('Вы успешно вошли через ВКонтакте!');
 
-      // Сохраняем данные пользователя (можно расширить)
       localStorage.setItem('vkUser', JSON.stringify({
         first_name: data.user?.first_name || 'Пользователь',
         id: data.user?.id || 'vk_user'
@@ -613,7 +654,7 @@
       alert('Ошибка авторизации: ' + (error.message || 'Попробуйте позже'));
     }
 
-    // Статус авторизации (кнопка "Войти" или приветствие)
+    // Статус авторизации
     function updateAuthStatus() {
       const user = JSON.parse(localStorage.getItem('vkUser'));
       const container = document.getElementById('auth-status');
@@ -639,8 +680,12 @@
       alert('Вы вышли из аккаунта');
     }
 
+    // Запуск при загрузке
     updateAuthStatus();
-    window.addEventListener('load', updateAuthStatus);
+    window.addEventListener('load', function() {
+      updateAuthStatus();
+      initVKOneTapTest();  // Тест на главной странице
+    });
 
     // Навигация и тема
     const segments = document.querySelectorAll('.segment');
