@@ -438,10 +438,11 @@
       </div>
     </div>
 
-    <!-- ТЕСТОВЫЙ КОНТЕЙНЕР VK One Tap НА ГЛАВНОЙ СТРАНИЦЕ -->
+    <!-- ТЕСТОВЫЙ БЛОК ДЛЯ VK One Tap НА ГЛАВНОЙ (для отладки) -->
     <div style="text-align:center; margin:40px 0; padding:20px; background:#f0f0f0; border-radius:12px;">
-      <h3>Тест VK One Tap (должен появиться ниже)</h3>
-      <div id="test_vk_container" style="margin:20px auto; max-width:360px;"></div>
+      <h3>Тест VK One Tap (должен появиться ниже, если SDK загрузился)</h3>
+      <div id="test_vk_container" style="margin:20px auto; max-width:360px; min-height:50px; border:1px dashed #ccc;"></div>
+      <p id="test_status" style="color:#666; font-size:14px;">Ожидание загрузки SDK...</p>
     </div>
   </main>
 
@@ -469,14 +470,14 @@
     </div>
   </div>
 
-  <!-- Модальное окно ВОЙТИ с VK One Tap -->
+  <!-- Модальное окно ВОЙТИ -->
   <div id="auth-modal" class="modal">
     <div class="modal-content">
       <span class="modal-close" onclick="closeModal('auth-modal')">×</span>
       <h2>Войти через ВКонтакте</h2>
 
       <div style="text-align:center; margin:32px 0;">
-        <div id="vk_id_login_container"></div>
+        <div id="vk_id_login_container" style="min-height:50px; border:1px dashed #ccc;"></div>
       </div>
 
       <p style="text-align:center; color:var(--gray); margin-top:20px;">
@@ -486,7 +487,7 @@
   </div>
 
   <script>
-    // Переводы
+    // Переводы (оставил только ru, чтобы не раздувать)
     const translations = {
       ru: {
         home: "Главная",
@@ -548,7 +549,7 @@
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
       if (id === 'auth-modal') {
-        setTimeout(initVKOneTap, 100); // Задержка 100 мс, чтобы модалка отобразилась
+        setTimeout(initVKOneTap, 300); // Задержка 300 мс для модалки
       }
     }
 
@@ -562,7 +563,7 @@
       });
     });
 
-    // Инициализация VK One Tap для модалки
+    // Инициализация VK One Tap (твой код)
     function initVKOneTap() {
       if ('VKIDSDK' in window) {
         const VKID = window.VKIDSDK;
@@ -593,51 +594,13 @@
             .then(vkidOnSuccess)
             .catch(vkidOnError);
         });
-        console.log('One Tap рендер в модалке выполнен');
       } else {
-        console.error('VKIDSDK не найден для модалки');
-      }
-    }
-
-    // ТЕСТОВАЯ инициализация VK One Tap на главной странице
-    function initVKOneTapTest() {
-      if ('VKIDSDK' in window) {
-        const VKID = window.VKIDSDK;
-
-        VKID.Config.init({
-          app: 54439662,
-          redirectUrl: 'https://catbrawl.ru/auth.html',
-          responseMode: VKID.ConfigResponseMode.Callback,
-          source: VKID.ConfigSource.LOWCODE,
-          scope: ''
-        });
-
-        const oneTapTest = new VKID.OneTap();
-
-        oneTapTest.render({
-          container: document.getElementById('test_vk_container'),
-          showAlternativeLogin: true,
-          styles: {
-            borderRadius: 20
-          }
-        })
-        .on(VKID.WidgetEvents.ERROR, vkidOnError)
-        .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
-          const code = payload.code;
-          const deviceId = payload.device_id;
-
-          VKID.Auth.exchangeCode(code, deviceId)
-            .then(vkidOnSuccess)
-            .catch(vkidOnError);
-        });
-        console.log('Тестовый One Tap на главной странице рендер выполнен');
-      } else {
-        console.error('VKIDSDK не найден для теста на главной');
+        console.error('VKIDSDK не загружен');
       }
     }
 
     function vkidOnSuccess(data) {
-      console.log('Успешный вход VK One Tap:', data);
+      console.log('Успешный вход:', data);
       alert('Вы успешно вошли через ВКонтакте!');
 
       localStorage.setItem('vkUser', JSON.stringify({
@@ -654,7 +617,7 @@
       alert('Ошибка авторизации: ' + (error.message || 'Попробуйте позже'));
     }
 
-    // Статус авторизации
+    // Функция обновления шапки (приветствие или кнопка Войти)
     function updateAuthStatus() {
       const user = JSON.parse(localStorage.getItem('vkUser'));
       const container = document.getElementById('auth-status');
@@ -680,14 +643,11 @@
       alert('Вы вышли из аккаунта');
     }
 
-    // Запуск при загрузке
+    // Запускаем при загрузке
     updateAuthStatus();
-    window.addEventListener('load', function() {
-      updateAuthStatus();
-      initVKOneTapTest();  // Тест на главной странице
-    });
+    window.addEventListener('load', updateAuthStatus);
 
-    // Навигация и тема
+    // Навигация и тема (без изменений)
     const segments = document.querySelectorAll('.segment');
     const pill = document.querySelector('.pill');
 
@@ -734,6 +694,6 @@
   </script>
 
   <!-- VK One Tap SDK -->
-  <script src="https://unpkg.com/@vkid/sdk@3.0.0/dist-sdk/umd/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@vkid/sdk@3/dist-sdk/umd/index.js"></script>
 </body>
 </html>
