@@ -470,18 +470,17 @@
       <h2 data-key="login_register">Войти через ВКонтакте</h2>
 
       <div style="text-align:center; margin:32px 0;">
-        <!-- Кнопка ВКонтакте (VK ID) -->
         <a href="https://id.vk.com/authorize?client_id=54439662&display=page&redirect_uri=https://catbrawl.ru/auth&response_type=code&scope=email" 
-           class="btn" style="background:#0077ff; color:white; padding:12px 24px; font-size:16px;">
+           class="btn" style="background:#0077ff; color:white; padding:14px 32px; font-size:18px; border-radius:12px; text-decoration:none;">
           Войти через ВК
         </a>
-        <p style="margin-top:16px; color:var(--gray);">Нажми кнопку выше — откроется окно ВКонтакте для авторизации</p>
+        <p style="margin-top:20px; color:var(--gray);">Нажмите кнопку выше — откроется окно ВКонтакте для авторизации</p>
       </div>
     </div>
   </div>
 
   <script>
-    // Переводы (твои последние изменения)
+    // Переводы
     const translations = {
       ru: {
         home: "Главная",
@@ -522,8 +521,46 @@
         choose_language: "Выберите язык",
         footer_disclaimer: "Данный контент не связан с компанией Supercell, не поддерживается, не спонсируется и не был утвержден ею, и компания Supercell не несет за него ответственность. Для получения большей информации смотрите: <a href=\"https://supercell.com/en/fan-content-policy/\" target=\"_blank\">Supercell's Fan Content Policy</a>."
       },
-      // Для остальных языков — аналогично, но с переводом login_register: "Login via VK" и т.д.
-      // Чтобы не раздувать — оставляем как есть, но ты можешь адаптировать
+      en: {
+        home: "Home",
+        download: "Download",
+        updates: "Updates",
+        stats: "Stats",
+        reviews: "Reviews",
+        social: "Social",
+        hero_desc: "Private Brawl Stars server — everything unlocked, no limits",
+        what_inside: "What's inside",
+        li1: "Unlimited gems, coins and credits",
+        li2: "All brawlers, gadgets, hypercharges and skins unlocked from the start",
+        li3: "Custom modes and boosted rewards",
+        li4: "No ads and no P2W",
+        li5: "Fast progression and regular events",
+        telegram_channel: "Telegram Channel",
+        apk: ".APK (Android)",
+        ipa: ".IPA (iOS)",
+        rustore: "RuStore",
+        last_updates: "Latest Updates",
+        update1: "New hypercharges added • Fixed 3v3 lags • +50 new skins • New mode \"Cat Battle\"",
+        update2: "Bug fixes in game • Daily gifts added • Optimized for iOS 26",
+        update3: "Login issues fixed • New community event • New Starr Drop type",
+        server_stats: "Server Statistics",
+        online_players: "Players Online",
+        brawlers_unlocked: "Brawlers Unlocked",
+        gems_coins: "Gems and Coins",
+        skins_available: "Skins Available",
+        player_reviews: "Player Reviews",
+        review1: "Best private server I've tried! Everything unlocked, no lags, new skins daily. Highly recommend!",
+        review2: "Finally can play without donation and grind. Server is stable, updates are frequent. 10/10",
+        social_media: "Follow Us",
+        subscribe_news: "Subscribe — fresh files and news there",
+        telegram: "Telegram",
+        tiktok: "TikTok",
+        login_register: "Login via VK",
+        soon_cabinet: "Personal account will be available after login",
+        choose_language: "Choose Language",
+        footer_disclaimer: "This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell and Supercell does not support it or bear responsibility for it. For more information see: <a href=\"https://supercell.com/en/fan-content-policy/\" target=\"_blank\">Supercell's Fan Content Policy</a>."
+      }
+      // Добавь остальные языки, если нужно
     };
 
     function changeLanguage(lang) {
@@ -556,7 +593,38 @@
       });
     });
 
-    // Навигация, тема и скролл (без изменений)
+    // Функция обновления статуса авторизации
+    function updateAuthStatus() {
+      const user = JSON.parse(localStorage.getItem('vkUser'));
+      const container = document.getElementById('auth-status');
+
+      if (container) {
+        if (user) {
+          const name = user.first_name || user.username || 'Игрок';
+          container.innerHTML = `
+            <div class="user-info">
+              Привет, ${name}!
+              <button onclick="logout()">Выйти</button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `<button class="btn-header" onclick="openModal('auth-modal')">Войти</button>`;
+        }
+      }
+    }
+
+    // Выход из аккаунта
+    function logout() {
+      localStorage.removeItem('vkUser');
+      updateAuthStatus();
+      alert('Вы вышли из аккаунта');
+    }
+
+    // Вызываем обновление статуса сразу и после загрузки
+    updateAuthStatus();
+    window.addEventListener('load', updateAuthStatus);
+
+    // Навигация и тема
     const segments = document.querySelectorAll('.segment');
     const pill = document.querySelector('.pill');
 
